@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tinh Hoa Văn Học Trung Đại Việt Nam</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --vintage-red: #a63429;
+            --ink-black: #1a1a1b;
+            --paper-bg: #fdf8f0;
+            --accent-gold: #c5a059;
+            --text-main: #2d2d2d;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: var(--paper-bg);
+            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png');
+            color: var(--text-main);
+            margin: 0; padding: 0;
+        }
+
+        .container { max-width: 1200px; margin: 40px auto; padding: 20px; }
+
+        header { text-align: center; margin-bottom: 50px; }
+        header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 8vw, 3.5rem);
+            color: var(--ink-black);
+            margin: 0;
+        }
+        header::after {
+            content: ""; display: block; width: 60px; height: 3px;
+            background: var(--vintage-red); margin: 15px auto;
+        }
+
+        /* Search & Filter */
+        .search-container { max-width: 600px; margin: 0 auto 30px; }
+        input[type="text"] {
+            width: 100%; padding: 15px 25px; border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 50px; font-size: 1rem; outline: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+
+        .filters { display: flex; justify-content: center; gap: 10px; margin-bottom: 40px; flex-wrap: wrap; }
+        .filter-btn {
+            padding: 8px 20px; border: none; background: white;
+            border-radius: 20px; cursor: pointer; font-weight: 600;
+            transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .filter-btn.active { background: var(--vintage-red); color: white; }
+
+        /* Author Grid */
+        .author-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        .author-card {
+            background: white; border-radius: 15px; padding: 25px;
+            cursor: pointer; transition: 0.3s; border: 1px solid rgba(0,0,0,0.03);
+            position: relative; overflow: hidden;
+        }
+        .author-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        .era-label { color: var(--vintage-red); font-size: 0.7rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+        .author-name { font-family: 'Playfair Display', serif; font-size: 1.6rem; margin: 10px 0; color: var(--ink-black); }
+        .works-preview { font-size: 0.9rem; color: #666; border-top: 1px solid #eee; padding-top: 10px; }
+
+        /* Fixed Modal - Chỉnh sửa quan trọng ở đây */
+        .modal {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); z-index: 9999;
+            backdrop-filter: blur(8px);
+            overflow-y: auto; /* Cho phép cuộn trên mobile */
+        }
+        .modal-content {
+            background: var(--paper-bg);
+            width: 95%; max-width: 850px;
+            margin: 50px auto;
+            border-radius: 20px;
+            position: relative; /* Gốc cho nút X */
+            display: flex; flex-wrap: wrap;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+        .close-modal {
+            position: absolute;
+            top: 15px; right: 20px;
+            width: 40px; height: 40px;
+            background: white;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 30px; font-weight: bold; color: var(--ink-black);
+            cursor: pointer; z-index: 10001;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: 0.2s;
+        }
+        .close-modal:hover { background: var(--vintage-red); color: white; }
+
+        .modal-left { flex: 1 1 300px; max-height: 500px; }
+        .modal-left img { width: 100%; height: 100%; object-fit: cover; }
+        .modal-right { flex: 1.5 1 400px; padding: 40px; box-sizing: border-box; }
+
+        .highlight { background: #fff59d; padding: 0 2px; }
+
+        @media (max-width: 600px) {
+            .modal-content { margin: 10px auto; }
+            .modal-right { padding: 25px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Cổ Ngữ Lưu Phương</h1>
+        <p>Hành trình tìm về vẻ đẹp văn chương trung đại Việt Nam</p>
+    </header>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Tìm tên tác giả hoặc áng văn chương..." onkeyup="render()">
+    </div>
+
+    <div class="filters">
+        <button class="filter-btn active" onclick="setFilter('all', this)">Toàn bộ</button>
+        <button class="filter-btn" onclick="setFilter('ly-tran', this)">Lý - Trần</button>
+        <button class="filter-btn" onclick="setFilter('hau-le', this)">Hậu Lê</button>
+        <button class="filter-btn" onclick="setFilter('nguyen', this)">Triều Nguyễn</button>
+    </div>
+
+    <div id="authorGrid" class="author-grid"></div>
+</div>
+
+<div id="authorModal" class="modal">
+    <div class="modal-content">
+        <div class="close-modal" onclick="closeModal()">&times;</div>
+        
+        <div class="modal-left" id="modalImg"></div>
+        <div class="modal-right" id="modalDetail"></div>
+    </div>
+</div>
+
+<script>
+    const data = [
+        { id: 1, era: 'ly-tran', eraName: 'Triều Lý - Trần', name: 'Trần Quốc Tuấn', works: 'Hịch tướng sĩ', img: 'https://upload.wikimedia.org/wikipedia/commons/2/23/Tran_Hung_Dao_statue_Nam_Dinh.JPG', bio: 'Hưng Đạo Đại Vương Trần Quốc Tuấn là nhà quân sự thiên tài. "Hịch tướng sĩ" là áng văn yêu nước bất hủ, thể hiện ý chí quyết chiến quyết thắng quân Nguyên Mông và tấm lòng lo cho vận mệnh đất nước.' },
+        { id: 2, era: 'hau-le', eraName: 'Triều Hậu Lê', name: 'Nguyễn Bỉnh Khiêm', works: 'Bạch Vân am thi tập, Sấm Trạng Trình', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSq4Fqj7o1-m0tB8Wz5uK3uU7X_yP3_z-3kUw&s', bio: 'Trạng Trình Nguyễn Bỉnh Khiêm là nhà triết học, nhà giáo dục lớn. Thơ ông mang đậm triết lý nhân sinh, thái độ nhàn tản và tấm lòng ưu thời mẫn thế giữa những biến động của thời đại.' },
+        { id: 3, era: 'nguyen', eraName: 'Triều Nguyễn', name: 'Hồ Xuân Hương', works: 'Tự tình, Bánh trôi nước, Lưu hương ký', img: 'https://vcdn1-giaitri.vnecdn.net/2022/11/23/Ho-Xuan-Huong-1669212003-16692-8051-4043-1669212027.jpg?w=1200&h=0&q=100&dpr=1&fit=crop&s=I3C-eQ_xVlRk8T3f2mC0tg', bio: 'Nữ sĩ được mệnh danh là "Bà chúa thơ Nôm". Thơ bà là sự kết hợp tuyệt vời giữa chất dân gian, trào phúng và nỗi đau thân phận người phụ nữ, khẳng định bản sắc cá nhân mạnh mẽ.' },
+        { id: 4, era: 'nguyen', eraName: 'Triều Nguyễn', name: 'Nguyễn Du', works: 'Truyện Kiều, Văn tế thập loại chúng sinh', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/NguyenDu.jpg/220px-NguyenDu.jpg', bio: 'Đại thi hào dân tộc Nguyễn Du đã nâng tầm ngôn ngữ tiếng Việt qua Truyện Kiều. Tác phẩm là tiếng khóc đứt ruột cho nỗi đau của con người và là bản cáo trạng xã hội phong kiến bất công.' }
+    ];
+
+    let currentCategory = 'all';
+
+    function render() {
+        const grid = document.getElementById('authorGrid');
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        grid.innerHTML = '';
+
+        const filtered = data.filter(a => {
+            const matchCat = currentCategory === 'all' || a.era === currentCategory;
+            const matchText = a.name.toLowerCase().includes(query) || a.works.toLowerCase().includes(query);
+            return matchCat && matchText;
+        });
+
+        filtered.forEach(a => {
+            grid.innerHTML += `
+                <div class="author-card" onclick="openModal(${a.id})">
+                    <span class="era-label">${a.eraName}</span>
+                    <div class="author-name">${highlight(a.name, query)}</div>
+                    <div class="works-preview"><strong>Tác phẩm chính:</strong> ${highlight(a.works, query)}</div>
+                </div>
+            `;
+        });
+    }
+
+    function highlight(text, query) {
+        if (!query) return text;
+        const re = new RegExp(`(${query})`, "gi");
+        return text.replace(re, '<span class="highlight">$1</span>');
+    }
+
+    function setFilter(cat, btn) {
+        currentCategory = cat;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        render();
+    }
+
+    function openModal(id) {
+        const a = data.find(x => x.id === id);
+        const modal = document.getElementById('authorModal');
+        
+        document.getElementById('modalImg').innerHTML = `<img src="${a.img}" alt="${a.name}">`;
+        document.getElementById('modalDetail').innerHTML = `
+            <span class="era-label">${a.eraName}</span>
+            <h2 style="font-family:'Playfair Display', serif; font-size:2.5rem; margin:15px 0;">${a.name}</h2>
+            <p style="color:var(--vintage-red); font-weight:600;">Tác phẩm chính: ${a.works}</p>
+            <div style="line-height:1.8; text-align:justify; color:#444;">${a.bio}</div>
+        `;
+        
+        modal.style.display = "block";
+        document.body.style.overflow = "hidden"; // Chống cuộn trang nền
+    }
+
+    function closeModal() {
+        document.getElementById('authorModal').style.display = "none";
+        document.body.style.overflow = "auto";
+    }
+
+    // Đóng khi bấm ra ngoài vùng trắng
+    window.onclick = (e) => { 
+        const modal = document.getElementById('authorModal');
+        if (e.target == modal) closeModal(); 
+    }
+
+    // Khởi tạo lần đầu
+    render();
+</script>
+
+</body>
+</html>
